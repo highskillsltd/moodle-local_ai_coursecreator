@@ -1,0 +1,11 @@
+{
+    "name": "local/ai_coursecreator",
+    "description": "Moodle local plugin – AI course creator",
+    "type": "moodle-plugin",
+    "require": {
+        "smalot/pdfparser": "^2.12"
+    },
+    "config": {
+        "vendor-dir": "vendor"
+    }
+}
