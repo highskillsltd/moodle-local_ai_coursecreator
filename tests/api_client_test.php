@@ -5,6 +5,14 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Unit tests for local_ai_coursecreator\ApiClient.
@@ -25,14 +33,11 @@ use local_ai_coursecreator\ApiClient;
  * @package   local_ai_coursecreator
  * @covers    \local_ai_coursecreator\ApiClient
  */
-class ApiClientTest extends advanced_testcase
-{
-
+class ApiClientTest extends advanced_testcase {
     /**
      * Set up test environment.
      */
-    protected function setUp(): void
-    {
+    protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();
     }
@@ -42,8 +47,7 @@ class ApiClientTest extends advanced_testcase
      *
      * @covers ::isConfigured
      */
-    public function testIsConfiguredFalseWhenEmpty(): void
-    {
+    public function testIsConfiguredFalseWhenEmpty(): void {
         set_config('stream_url', '', 'local_ai_coursecreator');
         set_config('api_key', '', 'local_ai_coursecreator');
         $client = new ApiClient();
@@ -55,8 +59,7 @@ class ApiClientTest extends advanced_testcase
      *
      * @covers ::isConfigured
      */
-    public function testIsConfiguredFalseWhenOnlyUrl(): void
-    {
+    public function testIsConfiguredFalseWhenOnlyUrl(): void {
         set_config('stream_url', 'https://api.example.com/stream', 'local_ai_coursecreator');
         set_config('api_key', '', 'local_ai_coursecreator');
         $client = new ApiClient();
@@ -68,8 +71,7 @@ class ApiClientTest extends advanced_testcase
      *
      * @covers ::isConfigured
      */
-    public function testIsConfiguredFalseWhenOnlyKey(): void
-    {
+    public function testIsConfiguredFalseWhenOnlyKey(): void {
         set_config('stream_url', '', 'local_ai_coursecreator');
         set_config('api_key', 'abc123', 'local_ai_coursecreator');
         $client = new ApiClient();
@@ -81,8 +83,7 @@ class ApiClientTest extends advanced_testcase
      *
      * @covers ::isConfigured
      */
-    public function testIsConfiguredTrueWhenBothSet(): void
-    {
+    public function testIsConfiguredTrueWhenBothSet(): void {
         set_config('stream_url', 'https://api.example.com/stream', 'local_ai_coursecreator');
         set_config('api_key', 'abc123', 'local_ai_coursecreator');
         $client = new ApiClient();
@@ -94,8 +95,7 @@ class ApiClientTest extends advanced_testcase
      *
      * @covers ::isInsecureUrl
      */
-    public function testIsInsecureUrlHttp(): void
-    {
+    public function testIsInsecureUrlHttp(): void {
         set_config('stream_url', 'http://insecure.example.com/stream', 'local_ai_coursecreator');
         set_config('api_key', 'key', 'local_ai_coursecreator');
         $client = new ApiClient();
@@ -107,8 +107,7 @@ class ApiClientTest extends advanced_testcase
      *
      * @covers ::isInsecureUrl
      */
-    public function testIsInsecureUrlHttps(): void
-    {
+    public function testIsInsecureUrlHttps(): void {
         set_config('stream_url', 'https://secure.example.com/stream', 'local_ai_coursecreator');
         set_config('api_key', 'key', 'local_ai_coursecreator');
         $client = new ApiClient();
@@ -120,8 +119,7 @@ class ApiClientTest extends advanced_testcase
      *
      * @covers ::getStreamUrl
      */
-    public function testGetStreamUrlReturnsUrl(): void
-    {
+    public function testGetStreamUrlReturnsUrl(): void {
         set_config('stream_url', 'https://api.example.com/stream', 'local_ai_coursecreator');
         set_config('api_key', 'key', 'local_ai_coursecreator');
         $client = new ApiClient();
@@ -133,8 +131,7 @@ class ApiClientTest extends advanced_testcase
      *
      * @covers ::getStreamUrl
      */
-    public function testGetStreamUrlStripsTrailingSlash(): void
-    {
+    public function testGetStreamUrlStripsTrailingSlash(): void {
         set_config('stream_url', 'https://api.example.com/stream/', 'local_ai_coursecreator');
         set_config('api_key', 'key', 'local_ai_coursecreator');
         $client = new ApiClient();

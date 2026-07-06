@@ -5,6 +5,14 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Unit tests for local_ai_coursecreator\FileExtractor.
@@ -25,16 +33,13 @@ use local_ai_coursecreator\FileExtractor;
  * @package   local_ai_coursecreator
  * @covers    \local_ai_coursecreator\FileExtractor
  */
-class FileExtractorTest extends advanced_testcase
-{
-
+class FileExtractorTest extends advanced_testcase {
     /**
      * Test extract returns raw content for .txt files.
      *
      * @covers ::extract
      */
-    public function testExtractTxt(): void
-    {
+    public function testExtractTxt(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_');
         file_put_contents($tmp, 'Hello world');
         $result = FileExtractor::extract($tmp, 'txt');
@@ -47,8 +52,7 @@ class FileExtractorTest extends advanced_testcase
      *
      * @covers ::extract
      */
-    public function testExtractCsv(): void
-    {
+    public function testExtractCsv(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_');
         file_put_contents($tmp, "a,b,c\n1,2,3");
         $result = FileExtractor::extract($tmp, 'csv');
@@ -61,8 +65,7 @@ class FileExtractorTest extends advanced_testcase
      *
      * @covers ::extract
      */
-    public function testExtractHtmlStripsTags(): void
-    {
+    public function testExtractHtmlStripsTags(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_');
         file_put_contents($tmp, '<p>Hello <b>World</b></p>');
         $result = FileExtractor::extract($tmp, 'html');
@@ -75,8 +78,7 @@ class FileExtractorTest extends advanced_testcase
      *
      * @covers ::extract
      */
-    public function testExtractHtmStripsTags(): void
-    {
+    public function testExtractHtmStripsTags(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_');
         file_put_contents($tmp, '<h1>Title</h1>');
         $result = FileExtractor::extract($tmp, 'htm');
@@ -89,8 +91,7 @@ class FileExtractorTest extends advanced_testcase
      *
      * @covers ::extract
      */
-    public function testExtractUnknownReturnsEmpty(): void
-    {
+    public function testExtractUnknownReturnsEmpty(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_');
         file_put_contents($tmp, 'some data');
         $result = FileExtractor::extract($tmp, 'xyz');
@@ -103,8 +104,7 @@ class FileExtractorTest extends advanced_testcase
      *
      * @covers ::extractZipXml
      */
-    public function testExtractZipXmlReadsEntry(): void
-    {
+    public function testExtractZipXmlReadsEntry(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_') . '.zip';
         $zip = new \ZipArchive();
         $zip->open($tmp, \ZipArchive::CREATE);
@@ -120,8 +120,7 @@ class FileExtractorTest extends advanced_testcase
      *
      * @covers ::extractZipXml
      */
-    public function testExtractZipXmlMissingEntry(): void
-    {
+    public function testExtractZipXmlMissingEntry(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_') . '.zip';
         $zip = new \ZipArchive();
         $zip->open($tmp, \ZipArchive::CREATE);
@@ -137,8 +136,7 @@ class FileExtractorTest extends advanced_testcase
      *
      * @covers ::extractZipXml
      */
-    public function testExtractZipXmlInvalidFile(): void
-    {
+    public function testExtractZipXmlInvalidFile(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_');
         file_put_contents($tmp, 'not a zip');
         $result = FileExtractor::extractZipXml($tmp, ['word/document.xml']);
@@ -151,8 +149,7 @@ class FileExtractorTest extends advanced_testcase
      *
      * @covers ::extractPdf
      */
-    public function testExtractPdfReturnsString(): void
-    {
+    public function testExtractPdfReturnsString(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_');
         file_put_contents($tmp, '%PDF-1.4 fake content');
         $result = FileExtractor::extractPdf($tmp);
@@ -165,8 +162,7 @@ class FileExtractorTest extends advanced_testcase
      *
      * @covers ::extract
      */
-    public function testExtractDocxReadsDocumentXml(): void
-    {
+    public function testExtractDocxReadsDocumentXml(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_') . '.docx';
         $zip = new \ZipArchive();
         $zip->open($tmp, \ZipArchive::CREATE);

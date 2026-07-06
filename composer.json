@@ -6,6 +6,10 @@
         "smalot/pdfparser": "^2.12"
     },
     "config": {
-        "vendor-dir": "vendor"
-    }
+        "vendor-dir": "vendor",
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "minimum-stability": "dev"
 }

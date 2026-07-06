@@ -5,6 +5,14 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Post-install hook for local_ai_coursecreator.
@@ -19,8 +27,7 @@
 /**
  * Called by Moodle after the plugin tables (if any) are created on install.
  */
-function xmldb_local_ai_coursecreator_install()
-{
+function xmldb_local_ai_coursecreator_install() {
     local_ai_coursecreator_create_role();
 }
 
@@ -32,8 +39,7 @@ function xmldb_local_ai_coursecreator_install()
  * context. No allowassign entries are added, so only site administrators
  * can assign it to users.
  */
-function local_ai_coursecreator_create_role()
-{
+function local_ai_coursecreator_create_role() {
     global $DB;
 
     if ($DB->record_exists('role', ['shortname' => 'ai_coursecreator'])) {

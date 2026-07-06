@@ -5,6 +5,14 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Admin settings for local_ai_coursecreator.
@@ -16,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-// ── Course-generation page under Site Administration → Courses ────────────────
+// Course-generation page under Site Administration → Courses ────────────────
 // Visible to anyone holding the generate capability who can access the admin area.
 $ADMIN->add('courses', new admin_externalpage(
     'local_ai_coursecreator_generate',
@@ -69,7 +77,7 @@ if ($hassiteconfig) {
     ));
 
 
-    // ── Diagnostics panel ─────────────────────────────────────────────────
+    // Diagnostics panel ─────────────────────────────────────────────────
     // Rendered as raw HTML inside admin_setting_description so it can carry
     // its own inline JS without needing a separate AMD module.
     $connurl = (new moodle_url('/local/ai_coursecreator/generate.php', ['action' => 'test_connection']))->out(false);

@@ -5,6 +5,14 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Plugin version metadata for local_ai_coursecreator.
@@ -18,6 +26,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_ai_coursecreator';
 $plugin->version   = 2026062809;
-$plugin->requires  = 2023042400; // Moodle 4.2
+$plugin->requires  = 2023042400; // Moodle 4.2.
 $plugin->maturity  = MATURITY_ALPHA;
 $plugin->release   = '0.1.0';

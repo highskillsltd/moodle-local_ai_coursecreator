@@ -5,6 +5,14 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace local_ai_coursecreator;
 
@@ -15,9 +23,7 @@ namespace local_ai_coursecreator;
  * @copyright 2026 Highskills and more <info@highskills.co.il>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class ApiClient
-{
-
+class ApiClient {
     /** @var string Full streaming endpoint URL read from plugin config. */
     private string $stream_url;
 
@@ -30,8 +36,7 @@ class ApiClient
     /**
      * Initialise the client by reading plugin configuration.
      */
-    public function __construct()
-    {
+    public function __construct() {
         $this->stream_url     = rtrim(get_config('local_ai_coursecreator', 'stream_url') ?? '', '/');
         $this->apikey         = get_config('local_ai_coursecreator', 'api_key') ?? '';
         $this->stream_timeout = max(30, (int) (get_config('local_ai_coursecreator', 'stream_timeout') ?: 600));
@@ -44,8 +49,7 @@ class ApiClient
      *
      * @return string Absolute path to the meta JSON file.
      */
-    public static function metaPath(): string
-    {
+    public static function metaPath(): string {
         global $USER;
         $key = md5($USER->id . '_' . session_id());
         return make_temp_directory('ai_coursecreator') . '/meta_' . $key . '.json';
@@ -56,8 +60,7 @@ class ApiClient
      *
      * @return bool True when both stream_url and api_key are non-empty.
      */
-    public function isConfigured(): bool
-    {
+    public function isConfigured(): bool {
         return $this->stream_url !== '' && $this->apikey !== '';
     }
 
@@ -66,8 +69,7 @@ class ApiClient
      *
      * @return bool True when the URL begins with http://.
      */
-    public function isInsecureUrl(): bool
-    {
+    public function isInsecureUrl(): bool {
         return stripos($this->stream_url, 'http://') === 0;
     }
 
@@ -76,8 +78,7 @@ class ApiClient
      *
      * @return string The configured stream endpoint URL.
      */
-    public function getStreamUrl(): string
-    {
+    public function getStreamUrl(): string {
         return $this->stream_url;
     }
 
@@ -95,8 +96,7 @@ class ApiClient
      * @return void
      * @throws \moodle_exception on cURL error or non-2xx HTTP status.
      */
-    public function stream(string $text, bool $include_images, callable $chunk_callback): void
-    {
+    public function stream(string $text, bool $include_images, callable $chunk_callback): void {
         $url = $this->getStreamUrl();
         $ch  = curl_init($url);
 
@@ -106,7 +106,7 @@ class ApiClient
         // HTML page from a real SSE stream before forwarding body bytes.
         $http_status   = 0;
         $is_bad_status = false;
-        $error_body    = '';   // buffered body when status is non-2xx.
+        $error_body    = '';   // Buffered body when status is non-2xx.
 
         curl_setopt_array($ch, [
             CURLOPT_POST           => true,

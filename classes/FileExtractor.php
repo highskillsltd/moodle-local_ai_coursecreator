@@ -5,6 +5,14 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace local_ai_coursecreator;
 
@@ -15,9 +23,7 @@ namespace local_ai_coursecreator;
  * @copyright 2026 Highskills and more <info@highskills.co.il>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class FileExtractor
-{
-
+class FileExtractor {
     /**
      * Extract plain text from an uploaded temporary file by extension.
      *
@@ -25,8 +31,7 @@ class FileExtractor
      * @param string $ext Lowercase file extension without the dot (e.g. 'pdf').
      * @return string Extracted plain-text content, or empty string on failure.
      */
-    public static function extract(string $tmp, string $ext): string
-    {
+    public static function extract(string $tmp, string $ext): string {
         switch ($ext) {
             case 'txt':
             case 'csv':
@@ -55,8 +60,7 @@ class FileExtractor
      * @param string[] $entries List of entry paths within the archive to extract.
      * @return string Concatenated, tag-stripped text from all matched entries.
      */
-    public static function extractZipXml(string $tmp, array $entries): string
-    {
+    public static function extractZipXml(string $tmp, array $entries): string {
         $zip = new \ZipArchive();
         if ($zip->open($tmp) !== true) {
             return '';
@@ -80,8 +84,7 @@ class FileExtractor
      * @param string $tmp Absolute path to the PDF file.
      * @return string Extracted plain-text content, or empty string on failure.
      */
-    public static function extractPdf(string $tmp): string
-    {
+    public static function extractPdf(string $tmp): string {
         // Primary: pdftotext (poppler-utils) — available on Linux/Mac servers.
         $cmd = trim((string) shell_exec('which pdftotext 2>/dev/null'));
         if ($cmd !== '') {
@@ -99,7 +102,7 @@ class FileExtractor
         if (!file_exists($autoload)) {
             return '';
         }
-        require_once $autoload;
+        require_once($autoload);
 
         try {
             $parser = new \Smalot\PdfParser\Parser();

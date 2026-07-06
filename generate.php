@@ -5,6 +5,14 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * SSE proxy, download, and restore endpoint for local_ai_coursecreator.
@@ -35,9 +43,7 @@ require_capability('local/ai_coursecreator:generate', $context);
 
 $action = required_param('action', PARAM_ALPHAEXT);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ACTION: stream
-// ─────────────────────────────────────────────────────────────────────────────
+// ACTION: stream.
 if ($action === 'stream') {
     require_sesskey();
 
@@ -83,12 +89,12 @@ if ($action === 'stream') {
     while (ob_get_level() > 0) {
         ob_end_clean();
     }
-    ob_implicit_flush(true);   // every echo auto-flushes; prevents re-buffering by hooks
+    ob_implicit_flush(true);   // Every echo auto-flushes; prevents re-buffering by hooks.
 
     header('Content-Type: text/event-stream');
     header('Cache-Control: no-cache');
     header('X-Accel-Buffering: no');
-    header('Content-Encoding: identity');   // disable compression filters (Apache, IIS)
+    header('Content-Encoding: identity');   // Disable compression filters (Apache, IIS).
 
     if (!$client->isConfigured()) {
         $msg = get_string('api_not_configured', 'local_ai_coursecreator');
@@ -204,9 +210,7 @@ if ($action === 'stream') {
     exit;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ACTION: download
-// ─────────────────────────────────────────────────────────────────────────────
+// ACTION: download.
 if ($action === 'download') {
     require_sesskey();
 
@@ -240,9 +244,7 @@ if ($action === 'download') {
     exit;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ACTION: restore
-// ─────────────────────────────────────────────────────────────────────────────
+// ACTION: restore.
 if ($action === 'restore') {
     require_sesskey();
 
@@ -316,9 +318,7 @@ if ($action === 'restore') {
     redirect($course_url, get_string('restore_success', 'local_ai_coursecreator'));
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ACTION: test_connection
-// ─────────────────────────────────────────────────────────────────────────────
+// ACTION: test_connection.
 if ($action === 'test_connection') {
     require_sesskey();
     \core\session\manager::write_close();
@@ -370,9 +370,7 @@ if ($action === 'test_connection') {
     exit;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ACTION: test_stream
-// ─────────────────────────────────────────────────────────────────────────────
+// ACTION: test_stream.
 if ($action === 'test_stream') {
     require_sesskey();
     \core\session\manager::write_close();
