@@ -43,10 +43,10 @@ class FileExtractor {
                 return trim(html_entity_decode(strip_tags($raw), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
 
             case 'docx':
-                return self::extractZipXml($tmp, ['word/document.xml']);
+                return self::extract_zip_xml($tmp, ['word/document.xml']);
 
             case 'pdf':
-                return self::extractPdf($tmp);
+                return self::extract_pdf($tmp);
 
             default:
                 return '';
@@ -60,7 +60,7 @@ class FileExtractor {
      * @param string[] $entries List of entry paths within the archive to extract.
      * @return string Concatenated, tag-stripped text from all matched entries.
      */
-    public static function extractZipXml(string $tmp, array $entries): string {
+    public static function extract_zip_xml(string $tmp, array $entries): string {
         $zip = new \ZipArchive();
         if ($zip->open($tmp) !== true) {
             return '';
@@ -84,7 +84,7 @@ class FileExtractor {
      * @param string $tmp Absolute path to the PDF file.
      * @return string Extracted plain-text content, or empty string on failure.
      */
-    public static function extractPdf(string $tmp): string {
+    public static function extract_pdf(string $tmp): string {
         // Primary: pdftotext (poppler-utils) — available on Linux/Mac servers.
         $cmd = trim((string) shell_exec('which pdftotext 2>/dev/null'));
         if ($cmd !== '') {

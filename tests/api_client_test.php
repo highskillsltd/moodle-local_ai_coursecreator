@@ -24,7 +24,6 @@
 
 namespace local_ai_coursecreator\tests;
 
-use advanced_testcase;
 use local_ai_coursecreator\ApiClient;
 
 /**
@@ -33,7 +32,7 @@ use local_ai_coursecreator\ApiClient;
  * @package   local_ai_coursecreator
  * @covers    \local_ai_coursecreator\ApiClient
  */
-class ApiClientTest extends advanced_testcase {
+class api_client_test extends \advanced_testcase {
     /**
      * Set up test environment.
      */
@@ -43,98 +42,98 @@ class ApiClientTest extends advanced_testcase {
     }
 
     /**
-     * Test isConfigured returns false when both settings are empty.
+     * Test is_configured returns false when both settings are empty.
      *
-     * @covers ::isConfigured
+     * @covers ::is_configured
      */
-    public function testIsConfiguredFalseWhenEmpty(): void {
+    public function test_is_configured_false_when_empty(): void {
         set_config('stream_url', '', 'local_ai_coursecreator');
         set_config('api_key', '', 'local_ai_coursecreator');
         $client = new ApiClient();
-        $this->assertFalse($client->isConfigured());
+        $this->assertFalse($client->is_configured());
     }
 
     /**
-     * Test isConfigured returns false when only stream_url is set.
+     * Test is_configured returns false when only stream_url is set.
      *
-     * @covers ::isConfigured
+     * @covers ::is_configured
      */
-    public function testIsConfiguredFalseWhenOnlyUrl(): void {
+    public function test_is_configured_false_when_only_url(): void {
         set_config('stream_url', 'https://api.example.com/stream', 'local_ai_coursecreator');
         set_config('api_key', '', 'local_ai_coursecreator');
         $client = new ApiClient();
-        $this->assertFalse($client->isConfigured());
+        $this->assertFalse($client->is_configured());
     }
 
     /**
-     * Test isConfigured returns false when only api_key is set.
+     * Test is_configured returns false when only api_key is set.
      *
-     * @covers ::isConfigured
+     * @covers ::is_configured
      */
-    public function testIsConfiguredFalseWhenOnlyKey(): void {
+    public function test_is_configured_false_when_only_key(): void {
         set_config('stream_url', '', 'local_ai_coursecreator');
         set_config('api_key', 'abc123', 'local_ai_coursecreator');
         $client = new ApiClient();
-        $this->assertFalse($client->isConfigured());
+        $this->assertFalse($client->is_configured());
     }
 
     /**
-     * Test isConfigured returns true when both settings are present.
+     * Test is_configured returns true when both settings are present.
      *
-     * @covers ::isConfigured
+     * @covers ::is_configured
      */
-    public function testIsConfiguredTrueWhenBothSet(): void {
+    public function test_is_configured_true_when_both_set(): void {
         set_config('stream_url', 'https://api.example.com/stream', 'local_ai_coursecreator');
         set_config('api_key', 'abc123', 'local_ai_coursecreator');
         $client = new ApiClient();
-        $this->assertTrue($client->isConfigured());
+        $this->assertTrue($client->is_configured());
     }
 
     /**
-     * Test isInsecureUrl returns true for http:// URL.
+     * Test is_insecure_url returns true for http:// URL.
      *
-     * @covers ::isInsecureUrl
+     * @covers ::is_insecure_url
      */
-    public function testIsInsecureUrlHttp(): void {
+    public function test_is_insecure_url_http(): void {
         set_config('stream_url', 'http://insecure.example.com/stream', 'local_ai_coursecreator');
         set_config('api_key', 'key', 'local_ai_coursecreator');
         $client = new ApiClient();
-        $this->assertTrue($client->isInsecureUrl());
+        $this->assertTrue($client->is_insecure_url());
     }
 
     /**
-     * Test isInsecureUrl returns false for https:// URL.
+     * Test is_insecure_url returns false for https:// URL.
      *
-     * @covers ::isInsecureUrl
+     * @covers ::is_insecure_url
      */
-    public function testIsInsecureUrlHttps(): void {
+    public function test_is_insecure_url_https(): void {
         set_config('stream_url', 'https://secure.example.com/stream', 'local_ai_coursecreator');
         set_config('api_key', 'key', 'local_ai_coursecreator');
         $client = new ApiClient();
-        $this->assertFalse($client->isInsecureUrl());
+        $this->assertFalse($client->is_insecure_url());
     }
 
     /**
-     * Test getStreamUrl returns the configured URL.
+     * Test get_stream_url returns the configured URL.
      *
-     * @covers ::getStreamUrl
+     * @covers ::get_stream_url
      */
-    public function testGetStreamUrlReturnsUrl(): void {
+    public function test_get_stream_url_returns_url(): void {
         set_config('stream_url', 'https://api.example.com/stream', 'local_ai_coursecreator');
         set_config('api_key', 'key', 'local_ai_coursecreator');
         $client = new ApiClient();
-        $this->assertSame('https://api.example.com/stream', $client->getStreamUrl());
+        $this->assertSame('https://api.example.com/stream', $client->get_stream_url());
     }
 
     /**
-     * Test getStreamUrl strips a trailing slash from the configured URL.
+     * Test get_stream_url strips a trailing slash from the configured URL.
      *
-     * @covers ::getStreamUrl
+     * @covers ::get_stream_url
      */
-    public function testGetStreamUrlStripsTrailingSlash(): void {
+    public function test_get_stream_url_strips_trailing_slash(): void {
         set_config('stream_url', 'https://api.example.com/stream/', 'local_ai_coursecreator');
         set_config('api_key', 'key', 'local_ai_coursecreator');
         $client = new ApiClient();
-        $this->assertSame('https://api.example.com/stream', $client->getStreamUrl());
+        $this->assertSame('https://api.example.com/stream', $client->get_stream_url());
     }
 }

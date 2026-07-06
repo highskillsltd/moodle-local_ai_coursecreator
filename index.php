@@ -45,21 +45,69 @@ $PAGE->requires->js_call_amd('local_ai_coursecreator/generate', 'init', [
 ]);
 
 echo $OUTPUT->header();
-?>
 
-<?php
 $client = new local_ai_coursecreator\ApiClient();
-if (!$client->isConfigured()) :
-    ?>
-<div class="alert alert-warning" role="alert">
-    <?php echo get_string('api_not_configured', 'local_ai_coursecreator'); ?>
-</div>
-    <?php
-endif;
-?>
+
+$warningbanner = '';
+if (!$client->is_configured()) {
+    $warningbanner = '<div class="alert alert-warning" role="alert">'
+        . get_string('api_not_configured', 'local_ai_coursecreator')
+        . '</div>';
+}
+
+$aidisclaimer = get_string('ai_disclaimer', 'local_ai_coursecreator');
+$sourcetextlabel = get_string('source_text_label', 'local_ai_coursecreator');
+$sourcetexthelp = get_string('source_text_help', 'local_ai_coursecreator');
+$phsourcetext = s($sourcetexthelp);
+$uploadlabel = get_string('upload_label', 'local_ai_coursecreator');
+$uploadhelp = get_string('upload_help', 'local_ai_coursecreator');
+$includeimageslabel = get_string('include_images_label', 'local_ai_coursecreator');
+$generatebtn = get_string('generate_btn', 'local_ai_coursecreator');
+$progressheading = get_string('progress_heading', 'local_ai_coursecreator');
+$lblwaiting = get_string('status_waiting', 'local_ai_coursecreator');
+
+$rows = [
+    ['id' => 'row-agent-1', 'label' => get_string('agent_analyst', 'local_ai_coursecreator')],
+    ['id' => 'row-agent-2', 'label' => get_string('agent_architect', 'local_ai_coursecreator')],
+    ['id' => 'row-agent-3', 'label' => get_string('agent_writer', 'local_ai_coursecreator')],
+    ['id' => 'row-images', 'label' => get_string('image_generator', 'local_ai_coursecreator')],
+    ['id' => 'row-build', 'label' => get_string('mbz_builder', 'local_ai_coursecreator')],
+];
+
+$progressrows = '';
+foreach ($rows as $row) {
+    $progressrows .= <<<HTML
+                        <tr id="{$row['id']}">
+                            <td class="ps-3 py-2 w-50">{$row['label']}</td>
+                            <td class="py-2">
+                                <span class="status-badge">
+                                    <span class="spinner-grow spinner-grow-sm text-secondary"
+                                          role="status"
+                                          aria-label="{$lblwaiting}"></span>
+                                </span>
+                            </td>
+                            <td class="py-2 text-end pe-3 text-muted small detail-cell"></td>
+                        </tr>
+
+HTML;
+}
+
+$resultheading = get_string('result_heading', 'local_ai_coursecreator');
+$resulttitlelabel = get_string('result_title_label', 'local_ai_coursecreator');
+$resultsizelabel = get_string('result_size_label', 'local_ai_coursecreator');
+$restoreaction = (new moodle_url('/local/ai_coursecreator/generate.php', ['action' => 'restore']))->out(false);
+$sesskey = sesskey();
+$restorebtn = get_string('restore_btn', 'local_ai_coursecreator');
+$backupareaurl = (new moodle_url('/backup/restorefile.php', ['contextid' => 1]))->out(false);
+$backuparealink = get_string('backup_area_link', 'local_ai_coursecreator');
+$errorheading = get_string('error_heading', 'local_ai_coursecreator');
+
+echo <<<HTML
+
+{$warningbanner}
 
 <div class="alert alert-warning" role="alert">
-    <?php echo get_string('ai_disclaimer', 'local_ai_coursecreator'); ?>
+    {$aidisclaimer}
 </div>
 
 <div class="row g-3 align-items-start">
@@ -70,24 +118,23 @@ endif;
             <div class="card-body">
                 <div class="mb-3">
                     <label for="source-text" class="form-label fw-semibold">
-                        <?php echo get_string('source_text_label', 'local_ai_coursecreator'); ?>
+                        {$sourcetextlabel}
                     </label>
                     <p class="text-muted small mb-2">
-                        <?php echo get_string('source_text_help', 'local_ai_coursecreator'); ?>
+                        {$sourcetexthelp}
                     </p>
-                    <?php $phSourceText = s(get_string('source_text_help', 'local_ai_coursecreator')); ?>
                     <textarea id="source-text"
                               class="form-control"
                               rows="10"
                               required
-                              placeholder="<?php echo $phSourceText; ?>"></textarea>
+                              placeholder="{$phsourcetext}"></textarea>
                 </div>
                 <div class="mb-3">
                     <label for="source-files" class="form-label fw-semibold">
-                        <?php echo get_string('upload_label', 'local_ai_coursecreator'); ?>
+                        {$uploadlabel}
                     </label>
                     <p class="text-muted small mb-1">
-                        <?php echo get_string('upload_help', 'local_ai_coursecreator'); ?>
+                        {$uploadhelp}
                     </p>
                     <input type="file" id="source-files" class="form-control"
                            accept=".txt,.csv,.html,.htm,.docx,.pdf" multiple>
@@ -95,11 +142,11 @@ endif;
                 <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" id="include-images" value="1">
                     <label class="form-check-label" for="include-images">
-                        <?php echo get_string('include_images_label', 'local_ai_coursecreator'); ?>
+                        {$includeimageslabel}
                     </label>
                 </div>
                 <button id="generate-btn" type="button" class="btn btn-primary">
-                    <?php echo get_string('generate_btn', 'local_ai_coursecreator'); ?>
+                    {$generatebtn}
                 </button>
             </div>
         </div>
@@ -111,34 +158,12 @@ endif;
         <!-- Progress panel (hidden until stream starts) -->
         <div id="progress-panel" class="card mb-3 d-none">
             <div class="card-header fw-semibold">
-                <?php echo get_string('progress_heading', 'local_ai_coursecreator'); ?>
+                {$progressheading}
             </div>
             <div class="card-body p-0">
                 <table class="table table-sm mb-0" id="progress-table">
                     <tbody>
-                        <?php
-                        $lblWaiting = get_string('status_waiting', 'local_ai_coursecreator');
-                        $rows = [
-                            ['id' => 'row-agent-1', 'label' => get_string('agent_analyst', 'local_ai_coursecreator')],
-                            ['id' => 'row-agent-2', 'label' => get_string('agent_architect', 'local_ai_coursecreator')],
-                            ['id' => 'row-agent-3', 'label' => get_string('agent_writer', 'local_ai_coursecreator')],
-                            ['id' => 'row-images', 'label' => get_string('image_generator', 'local_ai_coursecreator')],
-                            ['id' => 'row-build', 'label' => get_string('mbz_builder', 'local_ai_coursecreator')],
-                        ];
-                        foreach ($rows as $row) :
-                            ?>
-                        <tr id="<?php echo $row['id']; ?>">
-                            <td class="ps-3 py-2 w-50"><?php echo $row['label']; ?></td>
-                            <td class="py-2">
-                                <span class="status-badge">
-                                    <span class="spinner-grow spinner-grow-sm text-secondary"
-                                          role="status"
-                                          aria-label="<?php echo $lblWaiting; ?>"></span>
-                                </span>
-                            </td>
-                            <td class="py-2 text-end pe-3 text-muted small detail-cell"></td>
-                        </tr>
-                        <?php endforeach; ?>
+{$progressrows}
                     </tbody>
                 </table>
             </div>
@@ -147,35 +172,31 @@ endif;
         <!-- Result panel (hidden until done event) -->
         <div id="result-panel" class="card mb-3 d-none border-success">
             <div class="card-header fw-semibold text-success">
-                <?php echo get_string('result_heading', 'local_ai_coursecreator'); ?>
+                {$resultheading}
             </div>
             <div class="card-body">
                 <p class="mb-1">
                     <span class="fw-semibold">
-                        <?php echo get_string('result_title_label', 'local_ai_coursecreator'); ?>
+                        {$resulttitlelabel}
                     </span>
                     <span id="result-course-title"></span>
                 </p>
                 <p class="mb-3">
                     <span class="fw-semibold">
-                        <?php echo get_string('result_size_label', 'local_ai_coursecreator'); ?>
+                        {$resultsizelabel}
                     </span>
                     <span id="result-file-size"></span>
                 </p>
                 <div class="d-flex gap-2 flex-wrap align-items-center">
-                    <?php $restoreAction = (new moodle_url(
-                        '/local/ai_coursecreator/generate.php',
-                        ['action' => 'restore']
-                    ))->out(false); ?>
-                    <form method="post" action="<?php echo $restoreAction; ?>">
-                        <input type="hidden" name="sesskey" value="<?php echo sesskey(); ?>">
+                    <form method="post" action="{$restoreaction}">
+                        <input type="hidden" name="sesskey" value="{$sesskey}">
                         <button type="submit" class="btn btn-success">
-                            <?php echo get_string('restore_btn', 'local_ai_coursecreator'); ?>
+                            {$restorebtn}
                         </button>
                     </form>
-                    <a href="<?php echo (new moodle_url('/backup/restorefile.php', ['contextid' => 1]))->out(false); ?>"
+                    <a href="{$backupareaurl}"
                        class="btn btn-outline-secondary">
-                        <?php echo get_string('backup_area_link', 'local_ai_coursecreator'); ?>
+                        {$backuparealink}
                     </a>
                 </div>
             </div>
@@ -183,7 +204,7 @@ endif;
 
         <!-- Error banner (hidden until error event) -->
         <div id="error-panel" class="alert alert-danger d-none" role="alert">
-            <strong><?php echo get_string('error_heading', 'local_ai_coursecreator'); ?>:</strong>
+            <strong>{$errorheading}:</strong>
             <span id="error-message"></span>
         </div>
 
@@ -191,5 +212,6 @@ endif;
 
 </div><!-- /.row -->
 
-<?php
+HTML;
+
 echo $OUTPUT->footer();

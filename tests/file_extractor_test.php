@@ -24,7 +24,6 @@
 
 namespace local_ai_coursecreator\tests;
 
-use advanced_testcase;
 use local_ai_coursecreator\FileExtractor;
 
 /**
@@ -33,13 +32,13 @@ use local_ai_coursecreator\FileExtractor;
  * @package   local_ai_coursecreator
  * @covers    \local_ai_coursecreator\FileExtractor
  */
-class FileExtractorTest extends advanced_testcase {
+class file_extractor_test extends \advanced_testcase {
     /**
      * Test extract returns raw content for .txt files.
      *
      * @covers ::extract
      */
-    public function testExtractTxt(): void {
+    public function test_extract_txt(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_');
         file_put_contents($tmp, 'Hello world');
         $result = FileExtractor::extract($tmp, 'txt');
@@ -52,7 +51,7 @@ class FileExtractorTest extends advanced_testcase {
      *
      * @covers ::extract
      */
-    public function testExtractCsv(): void {
+    public function test_extract_csv(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_');
         file_put_contents($tmp, "a,b,c\n1,2,3");
         $result = FileExtractor::extract($tmp, 'csv');
@@ -65,7 +64,7 @@ class FileExtractorTest extends advanced_testcase {
      *
      * @covers ::extract
      */
-    public function testExtractHtmlStripsTags(): void {
+    public function test_extract_html_strips_tags(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_');
         file_put_contents($tmp, '<p>Hello <b>World</b></p>');
         $result = FileExtractor::extract($tmp, 'html');
@@ -78,7 +77,7 @@ class FileExtractorTest extends advanced_testcase {
      *
      * @covers ::extract
      */
-    public function testExtractHtmStripsTags(): void {
+    public function test_extract_htm_strips_tags(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_');
         file_put_contents($tmp, '<h1>Title</h1>');
         $result = FileExtractor::extract($tmp, 'htm');
@@ -91,7 +90,7 @@ class FileExtractorTest extends advanced_testcase {
      *
      * @covers ::extract
      */
-    public function testExtractUnknownReturnsEmpty(): void {
+    public function test_extract_unknown_returns_empty(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_');
         file_put_contents($tmp, 'some data');
         $result = FileExtractor::extract($tmp, 'xyz');
@@ -100,69 +99,69 @@ class FileExtractorTest extends advanced_testcase {
     }
 
     /**
-     * Test extractZipXml reads a named XML entry from a ZIP archive.
+     * Test extract_zip_xml reads a named XML entry from a ZIP archive.
      *
-     * @covers ::extractZipXml
+     * @covers ::extract_zip_xml
      */
-    public function testExtractZipXmlReadsEntry(): void {
+    public function test_extract_zip_xml_reads_entry(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_') . '.zip';
         $zip = new \ZipArchive();
         $zip->open($tmp, \ZipArchive::CREATE);
         $zip->addFromString('word/document.xml', '<w:t>Course Title</w:t>');
         $zip->close();
-        $result = FileExtractor::extractZipXml($tmp, ['word/document.xml']);
+        $result = FileExtractor::extract_zip_xml($tmp, ['word/document.xml']);
         unlink($tmp);
         $this->assertStringContainsString('Course Title', $result);
     }
 
     /**
-     * Test extractZipXml returns empty string when the entry does not exist.
+     * Test extract_zip_xml returns empty string when the entry does not exist.
      *
-     * @covers ::extractZipXml
+     * @covers ::extract_zip_xml
      */
-    public function testExtractZipXmlMissingEntry(): void {
+    public function test_extract_zip_xml_missing_entry(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_') . '.zip';
         $zip = new \ZipArchive();
         $zip->open($tmp, \ZipArchive::CREATE);
         $zip->addFromString('hello.txt', 'test');
         $zip->close();
-        $result = FileExtractor::extractZipXml($tmp, ['word/document.xml']);
+        $result = FileExtractor::extract_zip_xml($tmp, ['word/document.xml']);
         unlink($tmp);
         $this->assertSame('', $result);
     }
 
     /**
-     * Test extractZipXml returns empty string for an invalid (non-ZIP) file.
+     * Test extract_zip_xml returns empty string for an invalid (non-ZIP) file.
      *
-     * @covers ::extractZipXml
+     * @covers ::extract_zip_xml
      */
-    public function testExtractZipXmlInvalidFile(): void {
+    public function test_extract_zip_xml_invalid_file(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_');
         file_put_contents($tmp, 'not a zip');
-        $result = FileExtractor::extractZipXml($tmp, ['word/document.xml']);
+        $result = FileExtractor::extract_zip_xml($tmp, ['word/document.xml']);
         unlink($tmp);
         $this->assertSame('', $result);
     }
 
     /**
-     * Test extractPdf returns a string without throwing for any input.
+     * Test extract_pdf returns a string without throwing for any input.
      *
-     * @covers ::extractPdf
+     * @covers ::extract_pdf
      */
-    public function testExtractPdfReturnsString(): void {
+    public function test_extract_pdf_returns_string(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_');
         file_put_contents($tmp, '%PDF-1.4 fake content');
-        $result = FileExtractor::extractPdf($tmp);
+        $result = FileExtractor::extract_pdf($tmp);
         unlink($tmp);
         $this->assertIsString($result);
     }
 
     /**
-     * Test extract dispatches .docx to extractZipXml (word/document.xml entry).
+     * Test extract dispatches .docx to extract_zip_xml (word/document.xml entry).
      *
      * @covers ::extract
      */
-    public function testExtractDocxReadsDocumentXml(): void {
+    public function test_extract_docx_reads_document_xml(): void {
         $tmp = tempnam(sys_get_temp_dir(), 'aicc_') . '.docx';
         $zip = new \ZipArchive();
         $zip->open($tmp, \ZipArchive::CREATE);

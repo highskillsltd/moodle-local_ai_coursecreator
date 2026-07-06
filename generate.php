@@ -51,7 +51,7 @@ if ($action === 'stream') {
 
     // Extract text from any uploaded files and append to $text.
     if (!empty($_FILES['files']['tmp_name'])) {
-        $file_parts = [];
+        $fileparts = [];
         foreach ($_FILES['files']['tmp_name'] as $i => $tmp) {
             if ($_FILES['files']['error'][$i] !== UPLOAD_ERR_OK || !is_uploaded_file($tmp)) {
                 continue;
@@ -60,23 +60,23 @@ if ($action === 'stream') {
             $ext       = strtolower(pathinfo($name, PATHINFO_EXTENSION));
             $extracted = FileExtractor::extract($tmp, $ext);
             if ($extracted !== '') {
-                $file_parts[] = "=== {$name} ===\n{$extracted}";
+                $fileparts[] = "=== {$name} ===\n{$extracted}";
             }
         }
-        if (!empty($file_parts)) {
-            $combined = implode("\n\n", $file_parts);
+        if (!empty($fileparts)) {
+            $combined = implode("\n\n", $fileparts);
             $text     = $text !== '' ? $text . "\n\n" . $combined : $combined;
         }
     }
 
     // Measure teacher-provided content in bytes before system prompt is prepended.
     // Limit is enforced in the SSE section below so the error reaches the UI panel.
-    $text_bytes     = strlen($text);
-    $include_images = (bool) optional_param('include_images', 0, PARAM_INT);
+    $textbytes     = strlen($text);
+    $includeimages = (bool) optional_param('include_images', 0, PARAM_INT);
 
-    $system_prompt = trim(get_config('local_ai_coursecreator', 'system_prompt') ?? '');
-    if ($system_prompt !== '') {
-        $text = $system_prompt . "\n\n" . $text;
+    $systemprompt = trim(get_config('local_ai_coursecreator', 'system_prompt') ?? '');
+    if ($systemprompt !== '') {
+        $text = $systemprompt . "\n\n" . $text;
     }
     $client = new ApiClient();
 
@@ -96,7 +96,7 @@ if ($action === 'stream') {
     header('X-Accel-Buffering: no');
     header('Content-Encoding: identity');   // Disable compression filters (Apache, IIS).
 
-    if (!$client->isConfigured()) {
+    if (!$client->is_configured()) {
         $msg = get_string('api_not_configured', 'local_ai_coursecreator');
         echo 'data: ' . json_encode(['event' => 'error', 'message' => $msg]) . "\n\n";
         flush();
@@ -110,64 +110,64 @@ if ($action === 'stream') {
         exit;
     }
 
-    if ($text_bytes > 524288) {
+    if ($textbytes > 524288) {
         $msg = get_string('input_too_large', 'local_ai_coursecreator');
         echo 'data: ' . json_encode(['event' => 'error', 'message' => $msg]) . "\n\n";
         flush();
         exit;
     }
 
-    $parse_buffer = '';
-    $mbz_data     = null;
+    $parsebuffer = '';
+    $mbzdata     = null;
 
-    $stream_callback = function (string $chunk) use (&$parse_buffer, &$mbz_data): void {
+    $streamcallback = function (string $chunk) use (&$parsebuffer, &$mbzdata): void {
         echo $chunk;
         flush();
 
-        if ($mbz_data !== null) {
+        if ($mbzdata !== null) {
             return;
         }
 
-        $parse_buffer .= $chunk;
-        $blocks       = explode("\n\n", $parse_buffer);
-        $parse_buffer = array_pop($blocks);
+        $parsebuffer .= $chunk;
+        $blocks      = explode("\n\n", $parsebuffer);
+        $parsebuffer = array_pop($blocks);
 
         foreach ($blocks as $block) {
-            $data_line = null;
+            $dataline = null;
             foreach (explode("\n", $block) as $line) {
                 if (strpos($line, 'data: ') === 0) {
-                    $data_line = substr($line, 6);
+                    $dataline = substr($line, 6);
                     break;
                 }
             }
-            if ($data_line === null) {
+            if ($dataline === null) {
                 continue;
             }
 
-            $payload = json_decode($data_line, true);
+            $payload = json_decode($dataline, true);
             if (!is_array($payload) || ($payload['event'] ?? '') !== 'done') {
                 continue;
             }
 
-            $mbz_b64 = $payload['mbz_b64'] ?? '';
-            if ($mbz_b64 === '') {
+            $mbzb64 = $payload['mbz_b64'] ?? '';
+            if ($mbzb64 === '') {
                 continue;
             }
 
-            $safe_title = clean_param($payload['safe_title'] ?? 'course', PARAM_FILE);
-            if ($safe_title === '') {
-                $safe_title = 'course';
+            $safetitle = clean_param($payload['safe_title'] ?? 'course', PARAM_FILE);
+            if ($safetitle === '') {
+                $safetitle = 'course';
             }
 
-            $mbz_data = [
-                'bytes'      => base64_decode($mbz_b64, true),
-                'safe_title' => $safe_title,
+            $mbzdata = [
+                'bytes'      => base64_decode($mbzb64, true),
+                'safe_title' => $safetitle,
             ];
         }
     };
 
     try {
-        $client->stream($text, $include_images, $stream_callback);
+        $client->stream($text, $includeimages, $streamcallback);
     } catch (\Throwable $e) {
         echo 'data: ' . json_encode(['event' => 'error', 'message' => $e->getMessage()]) . "\n\n";
         flush();
@@ -177,33 +177,33 @@ if ($action === 'stream') {
     // Persist MBZ to the user private backup area and record the filename in a
     // meta JSON file.  We cannot write to $SESSION here because session_write_close()
     // was called above; the file API is DB-backed so it works without a session.
-    if ($mbz_data !== null) {
-        $filename     = $mbz_data['safe_title'] . '_' . time() . '.mbz';
-        $user_context = context_user::instance($USER->id);
-        $fs           = get_file_storage();
+    if ($mbzdata !== null) {
+        $filename    = $mbzdata['safe_title'] . '_' . time() . '.mbz';
+        $usercontext = context_user::instance($USER->id);
+        $fs          = get_file_storage();
 
         // Remove any pre-existing file with the same name to prevent a duplicate error.
-        $existing = $fs->get_file($user_context->id, 'user', 'backup', 0, '/', $filename);
+        $existing = $fs->get_file($usercontext->id, 'user', 'backup', 0, '/', $filename);
         if ($existing) {
             $existing->delete();
         }
 
         $fs->create_file_from_string(
             [
-                'contextid' => $user_context->id,
+                'contextid' => $usercontext->id,
                 'component' => 'user',
                 'filearea'  => 'backup',
                 'itemid'    => 0,
                 'filepath'  => '/',
                 'filename'  => $filename,
             ],
-            $mbz_data['bytes']
+            $mbzdata['bytes']
         );
 
-        file_put_contents(ApiClient::metaPath(), json_encode([
+        file_put_contents(ApiClient::meta_path(), json_encode([
             'filename'   => $filename,
-            'safe_title' => $mbz_data['safe_title'],
-            'size_bytes' => strlen($mbz_data['bytes']),
+            'safe_title' => $mbzdata['safe_title'],
+            'size_bytes' => strlen($mbzdata['bytes']),
         ]));
     }
 
@@ -214,18 +214,18 @@ if ($action === 'stream') {
 if ($action === 'download') {
     require_sesskey();
 
-    $meta_path = ApiClient::metaPath();
-    if (!file_exists($meta_path)) {
+    $metapath = ApiClient::meta_path();
+    if (!file_exists($metapath)) {
         throw new moodle_exception('no_mbz_in_session', 'local_ai_coursecreator');
     }
-    $info = json_decode(file_get_contents($meta_path), true);
+    $info = json_decode(file_get_contents($metapath), true);
     if (!$info || empty($info['filename'])) {
         throw new moodle_exception('no_mbz_in_session', 'local_ai_coursecreator');
     }
 
-    $user_context = context_user::instance($USER->id);
+    $usercontext = context_user::instance($USER->id);
     $fs   = get_file_storage();
-    $file = $fs->get_file($user_context->id, 'user', 'backup', 0, '/', $info['filename']);
+    $file = $fs->get_file($usercontext->id, 'user', 'backup', 0, '/', $info['filename']);
     if (!$file) {
         throw new moodle_exception('no_mbz_in_session', 'local_ai_coursecreator');
     }
@@ -240,7 +240,7 @@ if ($action === 'download') {
     $file->readfile();
 
     $file->delete();
-    @unlink($meta_path);
+    @unlink($metapath);
     exit;
 }
 
@@ -248,48 +248,48 @@ if ($action === 'download') {
 if ($action === 'restore') {
     require_sesskey();
 
-    $meta_path = ApiClient::metaPath();
-    if (!file_exists($meta_path)) {
+    $metapath = ApiClient::meta_path();
+    if (!file_exists($metapath)) {
         throw new moodle_exception('no_mbz_in_session', 'local_ai_coursecreator');
     }
-    $info = json_decode(file_get_contents($meta_path), true);
+    $info = json_decode(file_get_contents($metapath), true);
     if (!$info || empty($info['filename'])) {
         throw new moodle_exception('no_mbz_in_session', 'local_ai_coursecreator');
     }
 
-    $user_context = context_user::instance($USER->id);
+    $usercontext = context_user::instance($USER->id);
     $fs   = get_file_storage();
-    $file = $fs->get_file($user_context->id, 'user', 'backup', 0, '/', $info['filename']);
+    $file = $fs->get_file($usercontext->id, 'user', 'backup', 0, '/', $info['filename']);
     if (!$file) {
         throw new moodle_exception('no_mbz_in_session', 'local_ai_coursecreator');
     }
 
     // Extract directly from the file API into the Moodle backup temp dir.
     // restore_controller expects files at $CFG->tempdir/backup/{backupid}/.
-    $backupid    = restore_controller::get_tempdir_name(0, $USER->id);
-    $backupbase  = make_backup_temp_directory('', false);
-    $extract_dir = $backupbase . '/' . $backupid;
-    check_dir_exists($extract_dir);
+    $backupid   = restore_controller::get_tempdir_name(0, $USER->id);
+    $backupbase = make_backup_temp_directory('', false);
+    $extractdir = $backupbase . '/' . $backupid;
+    check_dir_exists($extractdir);
 
     $packer = get_file_packer('application/vnd.moodle.backup');
-    $packer->extract_to_pathname($file, $extract_dir . '/');
+    $packer->extract_to_pathname($file, $extractdir . '/');
 
     // Do NOT delete $file — it stays in the user's private backup area so the
     // teacher can access it via "View in backup area" after the restore.
-    @unlink($meta_path);
+    @unlink($metapath);
 
-    $default_category = core_course_category::get_default();
+    $defaultcategory = core_course_category::get_default();
 
-    $new_course = create_course((object)[
+    $newcourse = create_course((object)[
         'fullname'  => ($info['safe_title'] ?? 'AI Generated Course'),
         'shortname' => 'ai_' . time(),
-        'category'  => $default_category->id,
+        'category'  => $defaultcategory->id,
         'format'    => 'topics',
     ]);
 
     $controller = new restore_controller(
         $backupid,
-        $new_course->id,
+        $newcourse->id,
         backup::INTERACTIVE_NO,
         backup::MODE_GENERAL,
         $USER->id,
@@ -303,19 +303,19 @@ if ($action === 'restore') {
     if (!$controller->execute_precheck()) {
         $results = $controller->get_precheck_results();
         $controller->destroy();
-        fulldelete($extract_dir);
+        fulldelete($extractdir);
         $errmsg = implode('; ', array_map('strip_tags', $results['errors'] ?? ['Unknown precheck error']));
         throw new moodle_exception('restore_failed', 'local_ai_coursecreator', '', $errmsg);
     }
 
     $controller->execute_plan();
-    $restored_course_id = $controller->get_courseid();
+    $restoredcourseid = $controller->get_courseid();
     $controller->destroy();
 
-    fulldelete($extract_dir);
+    fulldelete($extractdir);
 
-    $course_url = new moodle_url('/course/view.php', ['id' => $restored_course_id]);
-    redirect($course_url, get_string('restore_success', 'local_ai_coursecreator'));
+    $courseurl = new moodle_url('/course/view.php', ['id' => $restoredcourseid]);
+    redirect($courseurl, get_string('restore_success', 'local_ai_coursecreator'));
 }
 
 // ACTION: test_connection.
@@ -327,17 +327,17 @@ if ($action === 'test_connection') {
     $apikey = get_config('local_ai_coursecreator', 'api_key') ?? '';
 
     $report = [
-        'configured'  => $client->isConfigured(),
+        'configured'  => $client->is_configured(),
         'stream_url'  => get_config('local_ai_coursecreator', 'stream_url') ?: '(empty)',
         'api_key_set' => $apikey !== '',
-        'insecure_url' => $client->isInsecureUrl(),
+        'insecure_url' => $client->is_insecure_url(),
     ];
 
-    if (!$client->isConfigured()) {
+    if (!$client->is_configured()) {
         $report['result'] = 'SKIP — settings incomplete';
     } else {
-        $stream_url = $client->getStreamUrl();
-        $ch = curl_init($stream_url);
+        $streamurl = $client->get_stream_url();
+        $ch = curl_init($streamurl);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => 10,
@@ -350,7 +350,7 @@ if ($action === 'test_connection') {
                 'Accept: text/event-stream',
             ],
         ]);
-        if ($client->isInsecureUrl()) {
+        if ($client->is_insecure_url()) {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         }
@@ -358,11 +358,10 @@ if ($action === 'test_connection') {
         $report['http_code']  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $report['curl_errno'] = curl_errno($ch);
         $report['curl_error'] = curl_error($ch) ?: null;
-        $timedOutButStreaming  = $report['curl_errno'] === 28 && $report['http_code'] === 200;
-        $report['result']     = ($report['curl_errno'] === 0 || $timedOutButStreaming)
+        $timedoutbutstreaming  = $report['curl_errno'] === 28 && $report['http_code'] === 200;
+        $report['result']     = ($report['curl_errno'] === 0 || $timedoutbutstreaming)
             ? 'REACHABLE'
             : 'CURL ERROR';
-        curl_close($ch);
     }
 
     header('Content-Type: application/json');
@@ -383,7 +382,7 @@ if ($action === 'test_stream') {
     header('Cache-Control: no-cache');
     header('X-Accel-Buffering: no');
 
-    $fake_events = [
+    $fakeevents = [
         ['event' => 'agent_start', 'agent' => 1, 'name' => 'Analyst'],
         ['event' => 'agent_done', 'agent' => 1, 'name' => 'Analyst',
          'elapsed_ms' => 1000, 'usage' => ['in' => 120, 'out' => 40, 'cache' => 0]],
@@ -400,7 +399,7 @@ if ($action === 'test_stream') {
          'size_bytes' => 2048, 'mbz_b64' => ''],
     ];
 
-    foreach ($fake_events as $ev) {
+    foreach ($fakeevents as $ev) {
         echo 'data: ' . json_encode($ev) . "\n\n";
         flush();
         sleep(1);
