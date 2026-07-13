@@ -15,7 +15,7 @@ Currently this plugin creates courses with the following modules: page, lesson, 
 
 ## Activation
 
-[Click here to request activation](mailto:info@highskills.co.il?subject=ACTIVATION%20local_ai_coursecreator)
+To get your activation endpoint and API key, please [complete the setup process here](https://www.highskills.co.il/ai/moodle-ai-course-creator-bydjf).
 
 ## Requirements
 
