@@ -15,7 +15,7 @@ Currently this plugin creates courses with the following modules: page, lesson, 
 
 ## Activation
 
-To get your activation endpoint and API key, please [complete the setup process here](https://www.highskills.co.il/ai/moodle-ai-course-creator-bydjf).
+To get your activation endpoint and API key, please [complete the setup process here](https://www.highskills.co.il/blog/ai/coursecreator-moodle).
 
 ## Requirements
 
