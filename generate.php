@@ -47,7 +47,7 @@ $action = required_param('action', PARAM_ALPHAEXT);
 if ($action === 'stream') {
     require_sesskey();
 
-    $text = optional_param('text', '', PARAM_RAW);
+    $text = optional_param('text', '', PARAM_TEXT);
 
     // Extract text from any uploaded files and append to $text.
     if (!empty($_FILES['files']['tmp_name'])) {

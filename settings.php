@@ -73,7 +73,7 @@ if ($hassiteconfig) {
         get_string('settings_system_prompt', 'local_ai_coursecreator'),
         get_string('settings_system_prompt_desc', 'local_ai_coursecreator'),
         '',
-        PARAM_RAW
+        PARAM_TEXT
     ));
 
 
