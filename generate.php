@@ -337,27 +337,24 @@ if ($action === 'test_connection') {
         $report['result'] = 'SKIP — settings incomplete';
     } else {
         $streamurl = $client->get_stream_url();
-        $ch = curl_init($streamurl);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 10,
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => json_encode(['text' => 'connection test']),
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTPHEADER     => [
+        $curl = new curl();
+        $curl->post($streamurl, json_encode(['text' => 'connection test']), [
+            'CURLOPT_TIMEOUT'        => 10,
+            'CURLOPT_FOLLOWLOCATION' => true,
+            'CURLOPT_HTTPHEADER'     => [
                 'Authorization: Bearer ' . $apikey,
                 'Content-Type: application/json',
                 'Accept: text/event-stream',
             ],
+            // Moodle's curl wrapper defaults SSL verification off; restore it explicitly
+            // and only relax it for an admin-configured plain-http:// endpoint.
+            'CURLOPT_SSL_VERIFYPEER' => !$client->is_insecure_url(),
+            'CURLOPT_SSL_VERIFYHOST' => $client->is_insecure_url() ? 0 : 2,
         ]);
-        if ($client->is_insecure_url()) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        }
-        curl_exec($ch);
-        $report['http_code']  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $report['curl_errno'] = curl_errno($ch);
-        $report['curl_error'] = curl_error($ch) ?: null;
+        $info = $curl->get_info();
+        $report['http_code']  = $info['http_code'] ?? 0;
+        $report['curl_errno'] = $curl->get_errno();
+        $report['curl_error'] = $curl->error ?: null;
         $timedoutbutstreaming  = $report['curl_errno'] === 28 && $report['http_code'] === 200;
         $report['result']     = ($report['curl_errno'] === 0 || $timedoutbutstreaming)
             ? 'REACHABLE'

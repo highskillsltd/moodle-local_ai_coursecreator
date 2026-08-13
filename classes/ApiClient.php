@@ -98,7 +98,6 @@ class ApiClient {
      */
     public function stream(string $text, bool $includeimages, callable $chunkcallback): void {
         $url = $this->get_stream_url();
-        $ch  = curl_init($url);
 
         $authheader = 'Authorization: Bearer ' . $this->apikey;
 
@@ -108,22 +107,25 @@ class ApiClient {
         $isbadstatus = false;
         $errorbody   = '';   // Buffered body when status is non-2xx.
 
-        curl_setopt_array($ch, [
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => json_encode([
-                'text'           => $text,
-                'include_images' => $includeimages,
-            ]),
-            CURLOPT_HTTPHEADER     => [
+        $curl = new \curl();
+        $curl->post($url, json_encode([
+            'text'           => $text,
+            'include_images' => $includeimages,
+        ]), [
+            'CURLOPT_HTTPHEADER'     => [
                 $authheader,
                 'Content-Type: application/json',
                 'Accept: text/event-stream',
             ],
-            CURLOPT_TIMEOUT        => $this->streamtimeout,
-            CURLOPT_RETURNTRANSFER => false,
-            CURLOPT_FOLLOWLOCATION => true,
+            'CURLOPT_TIMEOUT'        => $this->streamtimeout,
+            'CURLOPT_RETURNTRANSFER' => false,
+            'CURLOPT_FOLLOWLOCATION' => true,
+            // Moodle's curl wrapper defaults SSL verification off; restore it explicitly
+            // and only relax it for an admin-configured plain-http:// endpoint.
+            'CURLOPT_SSL_VERIFYPEER' => !$this->is_insecure_url(),
+            'CURLOPT_SSL_VERIFYHOST' => $this->is_insecure_url() ? 0 : 2,
             // Capture the response status line before any body data arrives.
-            CURLOPT_HEADERFUNCTION => function ($curl, $header) use (&$httpstatus, &$isbadstatus) {
+            'CURLOPT_HEADERFUNCTION' => function ($curl, $header) use (&$httpstatus, &$isbadstatus) {
                 if (preg_match('/^HTTP\/[\d.]+\s+(\d+)/', $header, $m)) {
                     $httpstatus  = (int) $m[1];
                     $isbadstatus = ($httpstatus < 200 || $httpstatus >= 300);
@@ -132,7 +134,7 @@ class ApiClient {
             },
 
             // Forward body only on 2xx; buffer it on error so we can report it.
-            CURLOPT_WRITEFUNCTION  => function ($curl, $data) use ($chunkcallback, &$isbadstatus, &$errorbody) {
+            'CURLOPT_WRITEFUNCTION'  => function ($curl, $data) use ($chunkcallback, &$isbadstatus, &$errorbody) {
                 if ($isbadstatus) {
                     $errorbody .= $data;
                     return strlen($data);
@@ -142,21 +144,12 @@ class ApiClient {
             },
         ]);
 
-        if ($this->is_insecure_url()) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        }
-
-        $ok    = curl_exec($ch);
-        $errno = curl_errno($ch);
-        $error = curl_error($ch);
-
-        if ($ok === false || $errno !== 0) {
+        if (!empty($curl->error)) {
             throw new \moodle_exception(
                 'curlerror',
                 'local_ai_coursecreator',
                 '',
-                "cURL error {$errno}: {$error}"
+                "cURL error {$curl->get_errno()}: {$curl->error}"
             );
         }
 
