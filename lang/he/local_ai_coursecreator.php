@@ -96,3 +96,14 @@ $string['ai_disclaimer']      = '⚠️ תוכן הקורס נוצר על ידי
 $string['privacy:metadata:ai_coursecreator_service'] = 'כדי ליצור קורס, הטקסט שהגשת (כולל טקסט שחולץ מקבצים שהועלו) נשלח לשירות יצירת הקורסים החיצוני בבינה מלאכותית שהוגדר.';
 $string['privacy:metadata:ai_coursecreator_service:text'] = 'טקסט מקור הקורס (שהוקלד או חולץ מקבצים שהועלו) שהוגש ליצירת הקורס.';
 $string['privacy:metadata:ai_coursecreator_service:includeimages'] = 'האם התבקשה יצירת תמונות בבינה מלאכותית עבור הקורס.';
+
+// Diagnostics panel (admin settings).
+$string['diag_test_desc']            = 'השתמש ב<strong>בדיקת חיבור API</strong> כדי לוודא שהתוסף יכול להתחבר לשירות החיצוני שהוגדר.';
+$string['diag_test_btn']             = 'בדיקת חיבור API';
+$string['diag_results_placeholder']  = '(התוצאות יופיעו כאן)';
+$string['diag_connecting']           = 'מתחבר…';
+$string['diag_fetch_error_prefix']   = 'שגיאת התחברות: ';
+
+// Course generation fallbacks.
+$string['default_course_fullname']   = 'קורס שנוצר בבינה מלאכותית';
+$string['unknown_precheck_error']    = 'שגיאת בדיקה מקדימה לא ידועה';
