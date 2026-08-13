@@ -32,7 +32,7 @@ use local_ai_coursecreator\FileExtractor;
  * @package   local_ai_coursecreator
  * @covers    \local_ai_coursecreator\FileExtractor
  */
-class file_extractor_test extends \advanced_testcase {
+final class file_extractor_test extends \advanced_testcase {
     /**
      * Test extract returns raw content for .txt files.
      *
