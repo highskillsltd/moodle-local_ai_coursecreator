@@ -14,7 +14,7 @@
  * @copyright  2026 Highskills and more <info@highskills.co.il>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['core/str'], function (Str) {
+define(['core/str', 'core/templates', 'core/notification'], function (Str, Templates, Notification) {
 
     'use strict';
 
@@ -23,7 +23,21 @@ define(['core/str'], function (Str) {
 
     // ── Helpers ────────────────────────────────────────────────────────────
 
-    var SPINNER = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>';
+    /**
+     * Render the status_badge template into a row's status-badge cell.
+     *
+     * @param {Element} cell    The `.status-badge` element to replace.
+     * @param {Object}  context Template context (one of {pending: true}, {running: true}, {done: true}).
+     */
+    function renderStatusBadge(cell, context)
+    {
+        Templates.render('local_ai_coursecreator/status_badge', context)
+            .then(function (html, js) {
+                Templates.replaceNodeContents(cell, html, js);
+                return null;
+            })
+            .catch(Notification.exception);
+    }
 
     /**
      * Format a byte count as a human-readable string.
@@ -65,7 +79,7 @@ define(['core/str'], function (Str) {
         if (!row) {
             return;
         }
-        row.querySelector('.status-badge').innerHTML = SPINNER + 'Running…';
+        renderStatusBadge(row.querySelector('.status-badge'), {running: true});
         row.querySelector('.detail-cell').textContent = '';
     }
 
@@ -81,8 +95,7 @@ define(['core/str'], function (Str) {
         if (!row) {
             return;
         }
-        row.querySelector('.status-badge').innerHTML =
-            '<span class="badge bg-success">Done</span>';
+        renderStatusBadge(row.querySelector('.status-badge'), {done: true});
         row.querySelector('.detail-cell').textContent = detail || '';
     }
 
@@ -173,8 +186,7 @@ define(['core/str'], function (Str) {
         ['row-agent-1', 'row-agent-2', 'row-agent-3', 'row-images', 'row-build'].forEach(function (id) {
             var row = document.getElementById(id);
             if (row) {
-                row.querySelector('.status-badge').innerHTML =
-                    '<span class="spinner-grow spinner-grow-sm text-secondary" role="status"></span>';
+                renderStatusBadge(row.querySelector('.status-badge'), {pending: true});
                 row.querySelector('.detail-cell').textContent = '';
             }
         });
