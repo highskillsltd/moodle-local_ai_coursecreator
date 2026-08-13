@@ -78,48 +78,15 @@ if ($hassiteconfig) {
 
 
     // Diagnostics panel ─────────────────────────────────────────────────
-    // Rendered as raw HTML inside admin_setting_description so it can carry
-    // its own inline JS without needing a separate AMD module.
+    // Rendered via a Mustache template (templates/diagnostics_panel.mustache) and
+    // an AMD module (amd/src/diagnostics.js) rather than embedded raw HTML/inline JS.
     $connurl = (new moodle_url('/local/ai_coursecreator/generate.php', ['action' => 'test_connection']))->out(false);
-    $sk      = sesskey();
 
-    $diagtestbtn    = get_string('diag_test_btn', 'local_ai_coursecreator');
-    $diagconnecting = get_string('diag_connecting', 'local_ai_coursecreator');
-    $diagfetcherr   = get_string('diag_fetch_error_prefix', 'local_ai_coursecreator');
+    $PAGE->requires->js_call_amd('local_ai_coursecreator/diagnostics', 'init', [
+        ['testUrl' => $connurl, 'sesskey' => sesskey()],
+    ]);
 
-    $diaghtml  = '<div class="mt-2">';
-    $diaghtml .= '<p class="text-muted small mb-2">'
-        . get_string('diag_test_desc', 'local_ai_coursecreator')
-        . '</p>';
-    $diaghtml .= '<div class="d-flex gap-2 mb-3 flex-wrap">';
-    $diaghtml .= '<button id="aicc-conn-btn" type="button"'
-        . ' class="btn btn-sm btn-outline-secondary">' . $diagtestbtn . '</button>';
-    $diaghtml .= '</div>';
-    $diaghtml .= '<pre id="aicc-diag-out" class="bg-light border rounded p-2 small mb-0"'
-        . ' style="min-height:3em;white-space:pre-wrap;word-break:break-all">'
-        . get_string('diag_results_placeholder', 'local_ai_coursecreator') . '</pre>';
-    $diaghtml .= '</div>';
-    $diaghtml .= '<script>
-(function () {
-    var sk = ' . json_encode($sk) . ';
-    var cu = ' . json_encode($connurl) . ';
-    var connecting = ' . json_encode($diagconnecting) . ';
-    var fetcherrprefix = ' . json_encode($diagfetcherr) . ';
-
-    document.getElementById("aicc-conn-btn").addEventListener("click", function () {
-        var out = document.getElementById("aicc-diag-out");
-        out.textContent = connecting;
-        fetch(cu, {
-            method : "POST",
-            headers: {"Content-Type": "application/x-www-form-urlencoded"},
-            body   : "sesskey=" + encodeURIComponent(sk),
-        })
-            .then(function (r) { return r.json(); })
-            .then(function (d) { out.textContent = JSON.stringify(d, null, 2); })
-            .catch(function (e) { out.textContent = fetcherrprefix + e; });
-    });
-}());
-</script>';
+    $diaghtml = $OUTPUT->render_from_template('local_ai_coursecreator/diagnostics_panel', []);
 
     $settings->add(new admin_setting_description(
         'local_ai_coursecreator/diagnostics',
