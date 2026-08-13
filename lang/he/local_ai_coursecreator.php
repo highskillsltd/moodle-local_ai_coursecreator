@@ -91,3 +91,8 @@ $string['ssl_warning']        = 'אזהרה: אימות תעודת SSL מושב�
 $string['curlerror']          = 'לא ניתן להתחבר לשירות הבינה מלאכותית: {$a}';
 $string['apierror']           = 'שירות הבינה מלאכותית החזיר שגיאה: {$a}';
 $string['ai_disclaimer']      = '⚠️ תוכן הקורס נוצר על ידי בינה מלאכותית ועשוי להכיל אי-דיוקים, מידע מיושן או שגיאות. יש לסקור ולאמת לפני פרסום לסטודנטים.';
+
+// Privacy API.
+$string['privacy:metadata:ai_coursecreator_service'] = 'כדי ליצור קורס, הטקסט שהגשת (כולל טקסט שחולץ מקבצים שהועלו) נשלח לשירות יצירת הקורסים החיצוני בבינה מלאכותית שהוגדר.';
+$string['privacy:metadata:ai_coursecreator_service:text'] = 'טקסט מקור הקורס (שהוקלד או חולץ מקבצים שהועלו) שהוגש ליצירת הקורס.';
+$string['privacy:metadata:ai_coursecreator_service:includeimages'] = 'האם התבקשה יצירת תמונות בבינה מלאכותית עבור הקורס.';
