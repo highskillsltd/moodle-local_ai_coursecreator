@@ -86,14 +86,28 @@ class FileExtractor {
      */
     public static function extract_pdf(string $tmp): string {
         // Primary: pdftotext (poppler-utils) — available on Linux/Mac servers.
-        $cmd = trim((string) shell_exec('which pdftotext 2>/dev/null'));
-        if ($cmd !== '') {
+        $pdftotext = self::find_pdftotext();
+        if ($pdftotext !== null) {
             $out = tempnam(sys_get_temp_dir(), 'aicc_');
-            shell_exec(escapeshellarg($cmd) . ' ' . escapeshellarg($tmp) . ' ' . escapeshellarg($out));
-            $text = file_get_contents($out) ?: '';
-            @unlink($out);
-            if ($text !== '') {
-                return $text;
+            $process = @proc_open(
+                [$pdftotext, $tmp, $out],
+                [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+                $pipes
+            );
+            if (is_resource($process)) {
+                // Drain stdout/stderr before closing to avoid a pipe-buffer deadlock.
+                stream_get_contents($pipes[1]);
+                stream_get_contents($pipes[2]);
+                fclose($pipes[1]);
+                fclose($pipes[2]);
+                proc_close($process);
+                $text = file_get_contents($out) ?: '';
+                @unlink($out);
+                if ($text !== '') {
+                    return $text;
+                }
+            } else {
+                @unlink($out);
             }
         }
 
@@ -111,5 +125,27 @@ class FileExtractor {
         } catch (\Throwable $e) {
             return '';
         }
+    }
+
+    /**
+     * Locate the pdftotext binary from a fixed allowlist of known install paths.
+     *
+     * Deliberately avoids resolving via the shell (e.g. `which`), which would
+     * depend on the process's $PATH — an uncontrolled command source.
+     *
+     * @return string|null Absolute path to pdftotext, or null if not found.
+     */
+    private static function find_pdftotext(): ?string {
+        $candidates = [
+            '/usr/bin/pdftotext',
+            '/usr/local/bin/pdftotext',
+            '/opt/homebrew/bin/pdftotext',
+        ];
+        foreach ($candidates as $path) {
+            if (is_executable($path)) {
+                return $path;
+            }
+        }
+        return null;
     }
 }
