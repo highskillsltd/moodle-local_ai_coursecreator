@@ -14,7 +14,7 @@
  * @copyright  2026 Highskills and more <info@highskills.co.il>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['core/str', 'core/notification'], function (Str, Notification) {
+define(['core/str', 'core/notification'], function(Str, Notification) {
 
     'use strict';
 
@@ -28,34 +28,46 @@ define(['core/str', 'core/notification'], function (Str, Notification) {
          * @param {string} config.testUrl  URL of the test_connection endpoint.
          * @param {string} config.sesskey  Moodle session key.
          */
-        init: function (config) {
+        init: function(config) {
             var btn = document.getElementById('aicc-conn-btn');
             var out = document.getElementById('aicc-diag-out');
             if (!btn || !out) {
                 return;
             }
 
+            // Resolved once, up front, rather than inside the click handler's own
+            // promise chain, so the fetch chain below isn't lexically nested inside
+            // this .then() callback.
+            var connecting = '';
+            var fetchErrPrefix = '';
+
             Str.get_strings([
                 {key: 'diag_connecting', component: 'local_ai_coursecreator'},
                 {key: 'diag_fetch_error_prefix', component: 'local_ai_coursecreator'},
-            ]).then(function (strings) {
-                var connecting = strings[0];
-                var fetchErrPrefix = strings[1];
-
-                btn.addEventListener('click', function () {
-                    out.textContent = connecting;
-                    fetch(config.testUrl, {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                        body: 'sesskey=' + encodeURIComponent(config.sesskey),
-                    })
-                        .then(function (r) { return r.json(); })
-                        .then(function (d) { out.textContent = JSON.stringify(d, null, 2); })
-                        .catch(function (e) { out.textContent = fetchErrPrefix + e; });
-                });
-
+            ]).then(function(strings) {
+                connecting = strings[0];
+                fetchErrPrefix = strings[1];
                 return null;
             }).catch(Notification.exception);
+
+            btn.addEventListener('click', function() {
+                out.textContent = connecting;
+                fetch(config.testUrl, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'sesskey=' + encodeURIComponent(config.sesskey),
+                })
+                    .then(function(r) {
+                        return r.json();
+                    })
+                    .then(function(d) {
+                        out.textContent = JSON.stringify(d, null, 2);
+                        return null;
+                    })
+                    .catch(function(e) {
+                        out.textContent = fetchErrPrefix + e;
+                    });
+            });
         },
     };
 });

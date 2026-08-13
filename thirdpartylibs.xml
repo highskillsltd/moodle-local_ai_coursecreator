@@ -14,4 +14,11 @@
         <license>MIT</license>
         <licenseversion>1.0</licenseversion>
     </library>
+    <library>
+        <location>vendor/composer</location>
+        <name>Composer autoloader</name>
+        <version>N/A</version>
+        <license>MIT</license>
+        <licenseversion>1.0</licenseversion>
+    </library>
 </libraries>

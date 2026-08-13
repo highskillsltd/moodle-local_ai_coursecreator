@@ -14,7 +14,7 @@
  * @copyright  2026 Highskills and more <info@highskills.co.il>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['core/str', 'core/templates', 'core/notification'], function (Str, Templates, Notification) {
+define(['core/str', 'core/templates', 'core/notification'], function(Str, Templates, Notification) {
 
     'use strict';
 
@@ -29,10 +29,9 @@ define(['core/str', 'core/templates', 'core/notification'], function (Str, Templ
      * @param {Element} cell    The `.status-badge` element to replace.
      * @param {Object}  context Template context (one of {pending: true}, {running: true}, {done: true}).
      */
-    function renderStatusBadge(cell, context)
-    {
+    function renderStatusBadge(cell, context) {
         Templates.render('local_ai_coursecreator/status_badge', context)
-            .then(function (html, js) {
+            .then(function(html, js) {
                 Templates.replaceNodeContents(cell, html, js);
                 return null;
             })
@@ -45,8 +44,7 @@ define(['core/str', 'core/templates', 'core/notification'], function (Str, Templ
      * @param {number} bytes Number of bytes.
      * @returns {string} Formatted string (e.g. "1.2 KB").
      */
-    function formatBytes(bytes)
-    {
+    function formatBytes(bytes) {
         if (bytes < 1024) {
             return bytes + ' B';
         } else if (bytes < 1048576) {
@@ -61,8 +59,7 @@ define(['core/str', 'core/templates', 'core/notification'], function (Str, Templ
      * @param {number} ms Elapsed time in milliseconds.
      * @returns {string} Formatted string (e.g. "3.5s").
      */
-    function formatElapsed(ms)
-    {
+    function formatElapsed(ms) {
         return (ms / 1000).toFixed(1) + 's';
     }
 
@@ -73,8 +70,7 @@ define(['core/str', 'core/templates', 'core/notification'], function (Str, Templ
      *
      * @param {string} rowId The DOM id of the table row element.
      */
-    function rowSetRunning(rowId)
-    {
+    function rowSetRunning(rowId) {
         var row = document.getElementById(rowId);
         if (!row) {
             return;
@@ -89,8 +85,7 @@ define(['core/str', 'core/templates', 'core/notification'], function (Str, Templ
      * @param {string} rowId  The DOM id of the table row element.
      * @param {string} detail Optional detail text to display.
      */
-    function rowSetDone(rowId, detail)
-    {
+    function rowSetDone(rowId, detail) {
         var row = document.getElementById(rowId);
         if (!row) {
             return;
@@ -107,8 +102,7 @@ define(['core/str', 'core/templates', 'core/notification'], function (Str, Templ
      * @param {Object} msg        Parsed JSON event from the SSE stream.
      * @param {string} msg.event  Event type name (e.g. 'agent_start', 'done', 'error').
      */
-    function handleEvent(msg)
-    {
+    function handleEvent(msg) {
         var event = msg.event;
 
         switch (event) {
@@ -118,9 +112,9 @@ define(['core/str', 'core/templates', 'core/notification'], function (Str, Templ
 
             case 'agent_done': {
                 var elapsed = formatElapsed(msg.elapsed_ms || 0);
-                var usage   = msg.usage || {};
-                var detail  = elapsed
-                    + ' · ' + (usage.in  || 0) + '↑ '
+                var usage = msg.usage || {};
+                var detail = elapsed
+                    + ' · ' + (usage.in || 0) + '↑ '
                     + (usage.out || 0) + '↓';
                 if (usage.cache) {
                     detail += ' ' + usage.cache + '↺';
@@ -170,20 +164,73 @@ define(['core/str', 'core/templates', 'core/notification'], function (Str, Templ
     // ── SSE stream consumer ────────────────────────────────────────────────
 
     /**
+     * Consume an SSE response body stream, dispatching each parsed event to handleEvent.
+     *
+     * Defined outside of any promise callback (rather than inline inside the fetch().then()
+     * chain below) so its own read-loop promise chain isn't lexically nested inside another
+     * .then() callback.
+     *
+     * @param {ReadableStreamDefaultReader} reader Reader for the response body stream.
+     * @returns {Promise} Resolves when the stream is exhausted.
+     */
+    function consumeStream(reader) {
+        var decoder = new TextDecoder();
+        var buffer = '';
+
+        /**
+         * Read one chunk from the stream and schedule the next read.
+         *
+         * @returns {Promise} Resolves when the stream is exhausted.
+         */
+        function pump() {
+            return reader.read().then(function(result) {
+                if (result.done) {
+                    return null;
+                }
+
+                buffer += decoder.decode(result.value, {stream: true});
+
+                var blocks = buffer.split('\n\n');
+                buffer = blocks.pop();
+
+                blocks.forEach(function(block) {
+                    var dataLine = null;
+                    block.split('\n').forEach(function(line) {
+                        if (line.indexOf('data: ') === 0 && dataLine === null) {
+                            dataLine = line.slice(6);
+                        }
+                    });
+                    if (dataLine === null) {
+                        return;
+                    }
+                    try {
+                        handleEvent(JSON.parse(dataLine));
+                    } catch (e) {
+                        // Ignore malformed JSON lines.
+                    }
+                });
+
+                return pump();
+            });
+        }
+
+        return pump();
+    }
+
+    /**
      * Submit the generation form and consume the SSE stream.
      *
      * @param {string}    text          Source text from the textarea.
      * @param {HTMLElement|null} fileInput  The file input element (may be null).
      * @param {boolean}   includeImages Whether to request image generation.
      */
-    function startGeneration(text, fileInput, includeImages)
-    {
+    function startGeneration(text, fileInput, includeImages) {
         // Reset UI.
         document.getElementById('result-panel').classList.add('d-none');
         document.getElementById('error-panel').classList.add('d-none');
         document.getElementById('generate-btn').disabled = true;
 
-        ['row-agent-1', 'row-agent-2', 'row-agent-3', 'row-images', 'row-build'].forEach(function (id) {
+        ['row-agent-1', 'row-agent-2', 'row-agent-3', 'row-images', 'row-build'].forEach(function(id) {
             var row = document.getElementById(id);
             if (row) {
                 renderStatusBadge(row.querySelector('.status-badge'), {pending: true});
@@ -206,55 +253,13 @@ define(['core/str', 'core/templates', 'core/notification'], function (Str, Templ
         fetch(cfg.streamUrl, {
             method: 'POST',
             body: formData,
-        }).then(function (response) {
+        }).then(function(response) {
             if (!response.ok) {
                 throw new Error('HTTP ' + response.status);
             }
 
-            var reader  = response.body.getReader();
-            var decoder = new TextDecoder();
-            var buffer  = '';
-
-            /**
-             * Read one chunk from the stream and schedule the next read.
-             *
-             * @returns {Promise} Resolves when the stream is exhausted.
-             */
-            function pump()
-            {
-                return reader.read().then(function (result) {
-                    if (result.done) {
-                        return;
-                    }
-
-                    buffer += decoder.decode(result.value, {stream: true});
-
-                    var blocks = buffer.split('\n\n');
-                    buffer = blocks.pop();
-
-                    blocks.forEach(function (block) {
-                        var dataLine = null;
-                        block.split('\n').forEach(function (line) {
-                            if (line.indexOf('data: ') === 0 && dataLine === null) {
-                                dataLine = line.slice(6);
-                            }
-                        });
-                        if (dataLine === null) {
-                            return;
-                        }
-                        try {
-                            handleEvent(JSON.parse(dataLine));
-                        } catch (e) {
-                            // Ignore malformed JSON lines.
-                        }
-                    });
-
-                    return pump();
-                });
-            }
-
-            return pump();
-        }).catch(function (err) {
+            return consumeStream(response.body.getReader());
+        }).catch(function(err) {
             document.getElementById('error-message').textContent = String(err);
             document.getElementById('error-panel').classList.remove('d-none');
             document.getElementById('generate-btn').disabled = false;
@@ -275,7 +280,7 @@ define(['core/str', 'core/templates', 'core/notification'], function (Str, Templ
          * @param {string} config.downloadUrl URL of the download endpoint.
          * @param {string} config.restoreUrl  URL of the restore endpoint.
          */
-        init: function (config) {
+        init: function(config) {
             cfg = config || {};
 
             var btn = document.getElementById('generate-btn');
@@ -283,12 +288,12 @@ define(['core/str', 'core/templates', 'core/notification'], function (Str, Templ
                 return;
             }
 
-            btn.addEventListener('click', function () {
-                var textarea     = document.getElementById('source-text');
-                var fileInput    = document.getElementById('source-files');
-                var imagesChk    = document.getElementById('include-images');
-                var text         = textarea ? textarea.value.trim() : '';
-                var hasFiles     = fileInput && fileInput.files && fileInput.files.length > 0;
+            btn.addEventListener('click', function() {
+                var textarea = document.getElementById('source-text');
+                var fileInput = document.getElementById('source-files');
+                var imagesChk = document.getElementById('include-images');
+                var text = textarea ? textarea.value.trim() : '';
+                var hasFiles = fileInput && fileInput.files && fileInput.files.length > 0;
                 var includeImages = imagesChk ? imagesChk.checked : false;
 
                 if (!text && !hasFiles) {

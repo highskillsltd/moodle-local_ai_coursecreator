@@ -35,6 +35,10 @@ jobs:
         php: ['8.1', '8.2', '8.3']
         moodle-branch: ['MOODLE_402_STABLE', 'MOODLE_405_STABLE']
         database: [pgsql, mariadb]
+        exclude:
+          # Moodle 4.2 does not support PHP 8.3 or higher.
+          - php: '8.3'
+            moodle-branch: 'MOODLE_402_STABLE'
 
     steps:
       - name: Check out repository code
