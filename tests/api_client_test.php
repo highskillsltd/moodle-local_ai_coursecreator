@@ -32,7 +32,7 @@ use local_ai_coursecreator\ApiClient;
  * @package   local_ai_coursecreator
  * @covers    \local_ai_coursecreator\ApiClient
  */
-class api_client_test extends \advanced_testcase {
+final class api_client_test extends \advanced_testcase {
     /**
      * Set up test environment.
      */
