@@ -83,25 +83,32 @@ if ($hassiteconfig) {
     $connurl = (new moodle_url('/local/ai_coursecreator/generate.php', ['action' => 'test_connection']))->out(false);
     $sk      = sesskey();
 
+    $diagtestbtn    = get_string('diag_test_btn', 'local_ai_coursecreator');
+    $diagconnecting = get_string('diag_connecting', 'local_ai_coursecreator');
+    $diagfetcherr   = get_string('diag_fetch_error_prefix', 'local_ai_coursecreator');
+
     $diaghtml  = '<div class="mt-2">';
     $diaghtml .= '<p class="text-muted small mb-2">'
-        . 'Use <strong>Test API Connection</strong> to verify the plugin can reach the configured external service.'
+        . get_string('diag_test_desc', 'local_ai_coursecreator')
         . '</p>';
     $diaghtml .= '<div class="d-flex gap-2 mb-3 flex-wrap">';
     $diaghtml .= '<button id="aicc-conn-btn" type="button"'
-        . ' class="btn btn-sm btn-outline-secondary">Test API Connection</button>';
+        . ' class="btn btn-sm btn-outline-secondary">' . $diagtestbtn . '</button>';
     $diaghtml .= '</div>';
     $diaghtml .= '<pre id="aicc-diag-out" class="bg-light border rounded p-2 small mb-0"'
-        . ' style="min-height:3em;white-space:pre-wrap;word-break:break-all">(results appear here)</pre>';
+        . ' style="min-height:3em;white-space:pre-wrap;word-break:break-all">'
+        . get_string('diag_results_placeholder', 'local_ai_coursecreator') . '</pre>';
     $diaghtml .= '</div>';
     $diaghtml .= '<script>
 (function () {
     var sk = ' . json_encode($sk) . ';
     var cu = ' . json_encode($connurl) . ';
+    var connecting = ' . json_encode($diagconnecting) . ';
+    var fetcherrprefix = ' . json_encode($diagfetcherr) . ';
 
     document.getElementById("aicc-conn-btn").addEventListener("click", function () {
         var out = document.getElementById("aicc-diag-out");
-        out.textContent = "Connecting…";
+        out.textContent = connecting;
         fetch(cu, {
             method : "POST",
             headers: {"Content-Type": "application/x-www-form-urlencoded"},
@@ -109,7 +116,7 @@ if ($hassiteconfig) {
         })
             .then(function (r) { return r.json(); })
             .then(function (d) { out.textContent = JSON.stringify(d, null, 2); })
-            .catch(function (e) { out.textContent = "Fetch error: " + e; });
+            .catch(function (e) { out.textContent = fetcherrprefix + e; });
     });
 }());
 </script>';

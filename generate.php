@@ -281,7 +281,7 @@ if ($action === 'restore') {
     $defaultcategory = core_course_category::get_default();
 
     $newcourse = create_course((object)[
-        'fullname'  => ($info['safe_title'] ?? 'AI Generated Course'),
+        'fullname'  => ($info['safe_title'] ?? get_string('default_course_fullname', 'local_ai_coursecreator')),
         'shortname' => 'ai_' . time(),
         'category'  => $defaultcategory->id,
         'format'    => 'topics',
@@ -304,7 +304,8 @@ if ($action === 'restore') {
         $results = $controller->get_precheck_results();
         $controller->destroy();
         fulldelete($extractdir);
-        $errmsg = implode('; ', array_map('strip_tags', $results['errors'] ?? ['Unknown precheck error']));
+        $errmsg = implode('; ', array_map('strip_tags', $results['errors']
+            ?? [get_string('unknown_precheck_error', 'local_ai_coursecreator')]));
         throw new moodle_exception('restore_failed', 'local_ai_coursecreator', '', $errmsg);
     }
 
