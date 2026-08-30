@@ -49,6 +49,9 @@ if ($action === 'stream') {
 
     $text = optional_param('text', '', PARAM_TEXT);
 
+    // Number of uploaded files whose text was successfully extracted (for logging).
+    $filecount = 0;
+
     // Extract text from any uploaded files and append to $text.
     if (!empty($_FILES['files']['tmp_name'])) {
         $fileparts = [];
@@ -63,6 +66,7 @@ if ($action === 'stream') {
                 $fileparts[] = "=== {$name} ===\n{$extracted}";
             }
         }
+        $filecount = count($fileparts);
         if (!empty($fileparts)) {
             $combined = implode("\n\n", $fileparts);
             $text     = $text !== '' ? $text . "\n\n" . $combined : $combined;
@@ -96,26 +100,43 @@ if ($action === 'stream') {
     header('X-Accel-Buffering: no');
     header('Content-Encoding: identity');   // Disable compression filters (Apache, IIS).
 
-    if (!$client->is_configured()) {
-        $msg = get_string('api_not_configured', 'local_ai_coursecreator');
-        echo 'data: ' . json_encode(['event' => 'error', 'message' => $msg]) . "\n\n";
+    // Emit a "generation failed" event, then the SSE error, then stop.
+    $failgeneration = function (string $reason, string $message) use ($context): void {
+        \local_ai_coursecreator\event\course_generation_failed::create([
+            'context' => $context,
+            'other'   => [
+                'reason'  => $reason,
+                'message' => \core_text::substr($message, 0, 255),
+            ],
+        ])->trigger();
+        echo 'data: ' . json_encode(['event' => 'error', 'message' => $message]) . "\n\n";
         flush();
+    };
+
+    if (!$client->is_configured()) {
+        $failgeneration('not_configured', get_string('api_not_configured', 'local_ai_coursecreator'));
         exit;
     }
 
     if (trim($text) === '') {
-        $msg = get_string('upload_no_input', 'local_ai_coursecreator');
-        echo 'data: ' . json_encode(['event' => 'error', 'message' => $msg]) . "\n\n";
-        flush();
+        $failgeneration('empty_input', get_string('upload_no_input', 'local_ai_coursecreator'));
         exit;
     }
 
     if ($textbytes > 524288) {
-        $msg = get_string('input_too_large', 'local_ai_coursecreator');
-        echo 'data: ' . json_encode(['event' => 'error', 'message' => $msg]) . "\n\n";
-        flush();
+        $failgeneration('too_large', get_string('input_too_large', 'local_ai_coursecreator'));
         exit;
     }
+
+    \local_ai_coursecreator\event\course_generation_started::create([
+        'context' => $context,
+        'other'   => [
+            'inputbytes'    => $textbytes,
+            'includeimages' => $includeimages,
+            'filecount'     => $filecount,
+            'systemprompt'  => $systemprompt !== '',
+        ],
+    ])->trigger();
 
     $parsebuffer = '';
     $mbzdata     = null;
@@ -169,8 +190,7 @@ if ($action === 'stream') {
     try {
         $client->stream($text, $includeimages, $streamcallback);
     } catch (\Throwable $e) {
-        echo 'data: ' . json_encode(['event' => 'error', 'message' => $e->getMessage()]) . "\n\n";
-        flush();
+        $failgeneration('stream_error', $e->getMessage());
         exit;
     }
 
@@ -205,6 +225,15 @@ if ($action === 'stream') {
             'safe_title' => $mbzdata['safe_title'],
             'size_bytes' => strlen($mbzdata['bytes']),
         ]));
+
+        \local_ai_coursecreator\event\course_generation_completed::create([
+            'context' => $context,
+            'other'   => [
+                'safetitle' => $mbzdata['safe_title'],
+                'sizebytes' => strlen($mbzdata['bytes']),
+                'filename'  => $filename,
+            ],
+        ])->trigger();
     }
 
     exit;
@@ -238,6 +267,14 @@ if ($action === 'download') {
     header('Cache-Control: no-store');
 
     $file->readfile();
+
+    \local_ai_coursecreator\event\course_backup_downloaded::create([
+        'context' => $context,
+        'other'   => [
+            'filename'  => $info['filename'],
+            'safetitle' => $info['safe_title'] ?? 'course',
+        ],
+    ])->trigger();
 
     $file->delete();
     @unlink($metapath);
@@ -315,6 +352,14 @@ if ($action === 'restore') {
 
     fulldelete($extractdir);
 
+    \local_ai_coursecreator\event\course_restored::create([
+        'context'  => context_course::instance($restoredcourseid),
+        'objectid' => $restoredcourseid,
+        'other'    => [
+            'safetitle' => $info['safe_title'] ?? get_string('default_course_fullname', 'local_ai_coursecreator'),
+        ],
+    ])->trigger();
+
     $courseurl = new moodle_url('/course/view.php', ['id' => $restoredcourseid]);
     redirect($courseurl, get_string('restore_success', 'local_ai_coursecreator'));
 }
@@ -361,6 +406,15 @@ if ($action === 'test_connection') {
             ? 'REACHABLE'
             : 'CURL ERROR';
     }
+
+    \local_ai_coursecreator\event\connection_tested::create([
+        'context' => $context,
+        'other'   => [
+            'result'     => $report['result'],
+            'httpcode'   => $report['http_code'] ?? 0,
+            'configured' => $report['configured'],
+        ],
+    ])->trigger();
 
     header('Content-Type: application/json');
     echo json_encode($report, JSON_PRETTY_PRINT);
